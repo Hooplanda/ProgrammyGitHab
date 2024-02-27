@@ -1,0 +1,84 @@
+-- Функция вывода меню
+local function menu()
+  print("Welcome to CogyDesc!")
+  print("1. Calculator")
+  print("2. Check System Capacity")
+  print("3. Connect to Wi-Fi") -- Новая опция меню
+  print("4. Exit")
+end
+
+-- Функция калькулятора
+local function calculator()
+  print("Enter the first number:")
+  local num1 = tonumber(read()) or 0
+  print("Enter the second number:")
+  local num2 = tonumber(read()) or 0
+  print("The sum is: " .. (num1 + num2))
+end
+
+-- Функция проверки емкости системы
+local function checkSystemCapacity()
+  local freeSpace = fs.getFreeSpace("/") or "N/A"
+  print("Free space: " .. freeSpace .. " bytes")
+end
+
+-- Функция подключения к Wi-Fi
+local function connectToWiFi()
+  local modem = peripheral.find("modem")  -- Поиск подключенного модема
+
+  -- Проверка наличия модема
+  if not modem then
+    print("No modem found.")
+    return
+  end
+
+  -- Попытка подключения к беспроводной сети
+  local ssid = "Your_WiFi_Network_Name"  -- Имя вашей Wi-Fi сети
+  local password = "Your_WiFi_Password"   -- Пароль от вашей Wi-Fi сети
+
+  print("Connecting to Wi-Fi...")
+  if modem.isWireless() then
+    modem.transmit(1, 1, {type="wifi", action="connect", ssid=ssid, password=password})
+  else
+    print("Wireless modem not found.")
+  end
+
+  -- Ожидание ответа от модема
+  local timer = os.startTimer(5)  -- Таймер ожидания ответа от модема (5 секунд)
+
+  while true do
+    local event, side, frequency, replyFrequency, message, distance = os.pullEvent()
+    if event == "modem_message" then
+      local data = textutils.unserialize(message)
+      if data.type == "wifi_status" then
+        if data.connected then
+          print("Successfully connected to Wi-Fi.")
+        else
+          print("Failed to connect to Wi-Fi.")
+        end
+        break
+      end
+    elseif event == "timer" and side == timer then
+      print("No response from modem.")
+      break
+    end
+  end
+end
+
+-- Основной цикл программы
+while true do
+  menu()
+  local choice = read()
+  if choice == "1" then
+    calculator()
+  elseif choice == "2" then
+    checkSystemCapacity()
+  elseif choice == "3" then
+    connectToWiFi() -- Вызываем новую функцию для подключения к Wi-Fi
+  elseif choice == "4" then
+    print("Goodbye!")
+    break
+  else
+    print("Invalid choice. Please try again.")
+  end
+end
